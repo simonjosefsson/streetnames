@@ -13,7 +13,7 @@ var ways = {};
 
 var map = L.map("map").setView(new L.LatLng(62.93, 17.78), 14);
 
-map.addEventListener("click", function (ev) {
+function sendOverpassQuery() {
   const request = new XMLHttpRequest();
 
   var bounds = map.getBounds();
@@ -28,16 +28,19 @@ map.addEventListener("click", function (ev) {
   request.open("GET", url);
   request.onload = handleOverpassResponse;
   request.send();
-});
+}
 
 function handleOverpassResponse(event) {
   //TODO: Handle status 429 Rate limit, 504 timeout and other error codes
   if (event.target.status != 200) {
-    console.log("HTTP status: " + event.target.status);
+    alert("HTTP status: " + event.target.status + event.target.responseText);
     return;
   }
 
   var data = JSON.parse(event.target.response);
+  // reset nodes and ways
+  nodes = {};
+  ways = {};
 
   for (const e of data.elements) {
     // save all nodes for easy indexing later
@@ -63,6 +66,8 @@ function handleOverpassResponse(event) {
 
   // Populate the listbox
   var list = document.getElementById("ss_elem_list");
+  list.innerHTML = "";
+
   for (let i = 0; i < shuffled_street_names.length; i++) {
     // Create the list item:
     var item = document.createElement("li");
@@ -78,6 +83,7 @@ function handleOverpassResponse(event) {
   }
   toggle_all_streets(true);
 }
+
 
 L.tileLayer(
   "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}" +
@@ -98,6 +104,10 @@ window.addEventListener("load", function () {
 
   document.getElementById("highlight_all_streets").onclick = function () {
     toggle_all_streets(this.checked);
+  };
+
+  document.getElementById("load_button").onclick = function () {
+    sendOverpassQuery();
   };
 });
 

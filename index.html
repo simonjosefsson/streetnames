@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link rel="stylesheet" type="text/css" href="./css/leaflet.css" />
-    <link rel="stylesheet" type="text/css" href="./css/OverPassLayer.css" />
     <link rel="stylesheet" type="text/css" href="./css/listbox.css" />
 
     <script src="./listbox/listbox.js"></script>
@@ -25,21 +24,22 @@
       <label for="center_on_street">Highlight all streets</label>
     </div>
     
-    <span># of streets: </span>
+    <span>Streets # </span>
     <span id="number_of_streets"></span>
 
     <!--TODO: Add "filter listbox"
     <input type="text" id="filter" placeholder="Search" />
     -->
     
-      <span id="ss_elem"> </span>
-      <ul
-        id="ss_elem_list"
-        tabindex="0"
-        role="listbox"
-        aria-labelledby="ss_elem"
-      ></ul>
+    <span id="ss_elem"> </span>
+    <ul
+      id="ss_elem_list"
+      tabindex="0"
+      role="listbox"
+      aria-labelledby="ss_elem"
+    ></ul>
 
+    <button id="load_button" >Load</button>
     
     <div id="map" style="position: absolute; left: 300px; right: 10px; top: 10px; bottom: 10px;"></div>
   </body>
