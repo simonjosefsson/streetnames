@@ -108,7 +108,27 @@ window.addEventListener("load", function () {
   document.getElementById("load_button").onclick = function () {
     sendOverpassQuery();
   };
+
+  const buttons = document.getElementsByClassName("city");
+  for (const button of buttons) {
+    button.onclick = function () {
+      centerOnCity(this.innerHTML);
+    }
+  };
+   
 });
+
+
+function centerOnCity(city) {
+
+  const cites = {};
+  cites["Kramfors"]  = [62.93, 17.78];
+  cites["Sollefteå"] = [63.17, 17.26];
+  cites["Härnösand"] = [62.63, 17.92];
+  
+  map.setView(cites[city], 14);
+}
+
 
 var currentStreetLayer;
 // Plot a single street
