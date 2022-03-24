@@ -1,34 +1,42 @@
-// dev
-// import './leaflet-1.8-dev/leaflet-src.js';
-
+// load from CDN instead?
 import "./leaflet.js";
 
-var current_road_name = "";
-var currentStreetLayer;
-
-// point ids with lat, lon values
+// node ids with latitude and longitude coordinates: nodes[id] = [lat, lon]
 var nodes = {};
-// all ways with the same street name
+// all ways with the same street name: ways[name] = [[node_id, node_id], [node_id, node_id, node_id]]
 var ways = {};
 
 var map = L.map("map").setView(new L.LatLng(62.93, 17.78), 14);
 
+L.tileLayer(
+  "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}" +
+    (L.Browser.retina ? "@2x.png" : ".png"),
+  {
+    attribution:
+      '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: "abcd"
+  }
+).addTo(map);
+
+
 function sendOverpassQuery() {
   const request = new XMLHttpRequest();
 
-  var bounds = map.getBounds();
+  const bounds = map.getBounds();
   const sw = bounds._southWest;
   const ne = bounds._northEast;
   const coordinates = [sw.lat, sw.lng, ne.lat, ne.lng].join(",");
-  //https://overpass.kumi.systems/api/interpreter
+  // alternative api endpoint, but kumi seems faster
+  // https://lz4.overpass-api.de/api/interpreter 
   var url =
-    'https://lz4.overpass-api.de/api/interpreter?data=[out:json];(way["highway"]["name"](' +
+    'https://overpass.kumi.systems/api/interpreter?data=[out:json];(way["highway"]["name"](' +
     coordinates +
     "); >; ); out;";
   request.open("GET", url);
   request.onload = handleOverpassResponse;
   request.send();
 }
+
 
 function handleOverpassResponse(event) {
   //TODO: Handle status 429 Rate limit, 504 timeout and other error codes
@@ -81,21 +89,12 @@ function handleOverpassResponse(event) {
     // Add it to the list:
     list.appendChild(item);
   }
+
   toggle_all_streets(true);
 }
 
 
-L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}" +
-    (L.Browser.retina ? "@2x.png" : ".png"),
-  {
-    attribution:
-      '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains: "abcd",
-  }
-).addTo(map);
-
-// Initialize the listbox on page load
+// Initialization on page load
 window.addEventListener("load", function () {
   var exListbox = new aria.Listbox(document.getElementById("ss_elem_list"));
   exListbox.setHandleFocusChange(function (target) {
@@ -111,19 +110,17 @@ window.addEventListener("load", function () {
   };
 });
 
+var currentStreetLayer;
 // Plot a single street
-function highlight_street(current_road_name) {
+function highlight_street(street_name) {
   if (currentStreetLayer) {
     currentStreetLayer.remove();
-  }
-  if (Object.keys(ways).length === 0) {
-    return;
   }
 
   currentStreetLayer = L.featureGroup().addTo(map);
 
   // each street has often more than one way
-  for (const way of ways[current_road_name]) {
+  for (const way of ways[street_name]) {
     var temp = [];
     // collect all nodes for a specific way
     for (const n of way) {
@@ -141,27 +138,28 @@ function highlight_street(current_road_name) {
   }
 }
 
+
 var all_streets = L.layerGroup();
  
 function toggle_all_streets(checked) {
   if (checked) {
-    for (const road_name in ways) {
+    for (const street_name in ways) {
       // each street has often more than one way
-      for (const way of ways[road_name]) {
+      for (const way of ways[street_name]) {
         var temp = [];
         // collect all nodes for a specific way
         for (const n of way) {
           temp.push(nodes[n]);
         }
-        var street = L.polyline(temp, {weight:3, color:'gray'});
+        var street = L.polyline(temp, {weight:5, color:'gray'});
         
-        //TODO: highlight streetname on click
+        // highlight street on click
         street.on("click", function (e) { 
-          highlight_street(road_name);
           var popup = L.popup()
           .setLatLng(e.latlng)
-          .setContent(road_name);
+          .setContent(street_name);
           map.openPopup(popup);
+          highlight_street(street_name);
         }); 
 
         all_streets.addLayer(street).addTo(map);
@@ -172,6 +170,7 @@ function toggle_all_streets(checked) {
     all_streets.removeFrom(map);
   }
 }
+
 
 // Helper shuffle function
 function shuffle(array) {
